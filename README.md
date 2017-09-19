@@ -39,6 +39,7 @@
 
 ## 使用的工具
 [create-react-app](https://github.com/facebookincubator/create-react-app)
+
 [gh-page](https://www.npmjs.com/package/gh-pages) 用来发布到Github
 
 ## 记录
@@ -48,38 +49,38 @@
 4. 我感觉这个项目不适合在React里面写，React是数据驱动页面的更新，而canvas绘图则是先获取canvas元素再进行操作
 5. 绘制的时候判断细胞状态是否发生改变，改变才会进行重绘，提高效率
 6. 获取鼠标点击位置相对于点击元素的坐标代码，**这里有个bug**就是如果用Mac的触控板对页面进行放大的话(不是缩放)，`e.clientX`和`e.clientY`获取的值会不正确，`e.clientX`获取的值应该是点击位置在浏览器可视区域的坐标。但放大后获取的值和未放大点击对应位置的值是一样的。但而`window.scrollX`的值是正常的，这就导致了点击对应细胞单元格后发生变化的是另一个单元格。**这个bug目前还没有解决**
-```javascript
-const getPageCoord = (target) => {
-  let coord = { X: 0, Y: 0 };
-  let element = target;
-  while (element) {
-    coord.X += element.offsetLeft;
-    coord.Y += element.offsetTop;
-    element = element.offsetParent;
-  }
-  return coord;
-};
+    ```javascript
+    const getPageCoord = (target) => {
+      let coord = { X: 0, Y: 0 };
+      let element = target;
+      while (element) {
+        coord.X += element.offsetLeft;
+        coord.Y += element.offsetTop;
+        element = element.offsetParent;
+      }
+      return coord;
+    };
 
-const getOffset = (e) => {
-  const target = e.target;
-  let pageCoord = getPageCoord(target);
-  const eventCoord = {
-    X: window.pageXOffset + e.clientX,
-    Y: window.pageYOffset + e.clientY,
-  };
-  console.log('pageCoord', pageCoord, e.clientX, e.clientY);
-  return {
-    X: eventCoord.X - pageCoord.X,
-    Y: eventCoord.Y - pageCoord.Y,
-  };
-};
+    const getOffset = (e) => {
+      const target = e.target;
+      let pageCoord = getPageCoord(target);
+      const eventCoord = {
+        X: window.pageXOffset + e.clientX,
+        Y: window.pageYOffset + e.clientY,
+      };
+      console.log('pageCoord', pageCoord, e.clientX, e.clientY);
+      return {
+        X: eventCoord.X - pageCoord.X,
+        Y: eventCoord.Y - pageCoord.Y,
+      };
+    };
 
-const coordinate = (e) => {
-   e = e || window.event;
-  return {
-    coord_X: e.offsetX ? e.offsetX : getOffset(e).X,
-    coord_Y: e.offsetY ? e.offsetY : getOffset(e).Y,
-  };
-};
-```
+    const coordinate = (e) => {
+       e = e || window.event;
+      return {
+        coord_X: e.offsetX ? e.offsetX : getOffset(e).X,
+        coord_Y: e.offsetY ? e.offsetY : getOffset(e).Y,
+      };
+    };
+    ```
 7. `window.pageXOffset`是`window.scrollX`的别名，为了跨浏览器兼容性，请使用 `window.pageXOffset` 代替 `window.scrollX`
