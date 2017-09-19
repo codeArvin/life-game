@@ -16,5 +16,5 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
   },
-  "homepages": "https://codearvin.github.io/life-game"
+  "homepage": "https://codearvin.github.io/life-game"
 }
