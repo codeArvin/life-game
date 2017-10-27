@@ -16,7 +16,7 @@ const getOffset = (e) => {
     X: window.pageXOffset + e.clientX,
     Y: window.pageYOffset + e.clientY,
   };
-  console.log('pageCoord', pageCoord, e.clientX, e.clientY);
+  // console.log('pageCoord', pageCoord, e.clientX, e.clientY);
   return {
     X: eventCoord.X - pageCoord.X,
     Y: eventCoord.Y - pageCoord.Y,

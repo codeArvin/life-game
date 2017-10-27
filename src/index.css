@@ -1,5 +1,10 @@
-body {
+/*
+  突然发现body获取的高度出现问题导致显示不出来，在这里把html,body的高度都设置为100%就好了。
+  我记得之前是是好用的啊，为啥突然不好用了。。。。
+*/
+html, body {
   margin: 0;
   padding: 0;
+  height: 100%;
   font-family: sans-serif;
 }
