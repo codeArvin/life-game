@@ -1,0 +1,49 @@
+.color-pallet {
+    position: absolute;
+    right: 200px;
+    top: 5px;
+    width: 400px;
+    height: 100px;
+}
+
+.left {
+    float: left;
+    width: 80%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.left > div {
+    width: 100%;
+}
+
+.right {
+    float: right;
+    height: 100%;
+    width: 20%;
+}
+
+.color {
+    width: 80px;
+    height: 80px;
+    border-radius: 5px;
+}
+
+.input {
+    width: 60px;
+    margin-left: 10px;
+    margin-right: 5px;
+}
+
+.input, input, label {
+    display: inline-block;
+}
+
+input {
+    margin-left: 5px;
+    width: 35px;
+    vertical-align: center;
+}

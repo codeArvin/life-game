@@ -31,4 +31,4 @@ const coordinate = (e) => {
   };
 };
 
-export { coordinate };
+export { coordinate, getPageCoord };

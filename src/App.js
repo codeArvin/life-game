@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
 
 import { coordinate } from './utils/offset.js';
+
+import ColorPallet from './ColorPallet';
 
 // 没有必要用 React ，只是方便用 es6 的语法，比较方便
 // React 是通过数据来展现对应的界面，而 canvas 是先获取 canvas 再进行操作。所以变量就放在全局，不适合放在 state 中
@@ -15,15 +16,17 @@ let template = 'empty';
 
 let currentArr = null; // 标识细胞状态的二维数组, 当前状态
 let nextArr = null; // 标识细胞状态的二维数组, 接下来状态
-const live_colors = ["#ee3b3b", "#ff7f24", "#eead00", "#66cd00", "#698d69", "#00ced1", "#b23aee", "#333333"];
-let live_colors_count = 0;
+// const live_colors = ["#ee3b3b", "#ff7f24", "#eead00", "#66cd00", "#698d69", "#00ced1", "#b23aee", "#333333"];
+// let live_colors_count = 0;
 let running = null; // 是否运行中
+
+let live_color = 'rgb(255, 0, 0)';
 
 let colCount = null;
 let rowCount = null;
 
 let mouseDrawing = false; // 鼠标是否绘制中
-let mouseDrawType = null; // 鼠标绘制状态，1为绘制，2为擦除
+let mouseDrawType = null; // 鼠标绘制状态，1为绘制，0为擦除
 
 // 初始化数组
 const init = () => {
@@ -42,6 +45,9 @@ const init = () => {
       break;
     case 'large':
       threshold = 1 / 4;
+      break;
+    default:
+      threshold = 2 / 4;
       break;
   }
 
@@ -78,8 +84,12 @@ class App extends Component {
       size_disabled: false,
       speed_disabled: false,
       // color
-      live_color: live_colors[0], // 活细胞颜色
+      // live_color: live_colors[0], // 活细胞颜色
       death_color: '#CCC', // 死细胞颜色
+      // select option
+      template: 'empty',
+      size: '20',
+      speed: '150',
     };
 
     this.draw = this.draw.bind(this);
@@ -97,6 +107,7 @@ class App extends Component {
     this.handleCanvasMouseUp = this.handleCanvasMouseUp.bind(this);
     this.drawSingle = this.drawSingle.bind(this);
     this.getNextArray = this.getNextArray.bind(this);
+    this.getRowColAndDraw = this.getRowColAndDraw.bind(this);
   }
   // 计算canvas和canvasContainer的宽度高度等属性，在改变细胞大小的时候才会调用
   compute() {
@@ -191,7 +202,7 @@ class App extends Component {
         // 绘制的数据是nextArr, 与currentArr进行对比进行优化
         if (currentArr === null || nextArr[i][j] !== currentArr[i][j]) {
           if (nextArr[i][j] === 1) {
-            ctx.fillStyle = this.state.live_color;
+            ctx.fillStyle = live_color;
           } else {
             ctx.fillStyle = this.state.death_color;
           }
@@ -215,13 +226,26 @@ class App extends Component {
   // 绘制单个细胞
   drawSingle(row, col, mouseDrawType) {
     const ctx = this.canvas.getContext('2d');
-    ctx.fillStyle = mouseDrawType ? this.state.live_color : this.state.death_color;
+    ctx.fillStyle = mouseDrawType ? live_color : this.state.death_color;
     if (size < 3) {
       ctx.fillRect(col * size, row * size, size, size);
     } else {
       ctx.fillRect(col * size + 1, row * size + 1, size - 1, size - 1);
     }
   }
+
+  // 获得Row和Col，进行绘制
+  getRowColAndDraw(e) {
+    const coord = coordinate(e),
+          row = Math.floor(coord.coord_Y / size),
+          col = Math.floor(coord.coord_X / size);
+    // 只有需要改变状态的时候才会重新绘制那个细胞
+    if (row < rowCount && col < colCount && currentArr[col][row] !== mouseDrawType) {
+      currentArr[col][row] = mouseDrawType;
+      this.drawSingle(row, col, mouseDrawType);
+    }
+  }
+
   // 初始化
   initiate() {
     this.setState({
@@ -234,6 +258,31 @@ class App extends Component {
   }
   // 组件加载完进行计算绘制
   componentDidMount() {
+    const getRowColAndDraw = this.getRowColAndDraw;
+    document.addEventListener('keydown', function (e) {
+        if (e.which === 17) {
+            mouseDrawing = true;
+            mouseDrawType = 1;
+            getRowColAndDraw(e);
+        }
+        if (e.which === 18) {
+            mouseDrawing = true;
+            mouseDrawType = 0;
+            getRowColAndDraw(e);
+        }
+    });
+    document.addEventListener('keyup', function (e) {
+        if (e.which === 17) {
+            mouseDrawing = false;
+            mouseDrawType = null;
+            getRowColAndDraw(e);
+        }
+        if (e.which === 18) {
+            mouseDrawing = false;
+            mouseDrawType = null;
+            getRowColAndDraw(e);
+        }
+    });
     this.compute();
   }
   // 开始自动迭代
@@ -279,53 +328,40 @@ class App extends Component {
   // 改变细胞大小
   handleSizeChange(e) {
     size = e.target.value;
+    this.setState({
+        size: size,
+    })
     this.compute();
   }
   // 改变速度
   handleSpeedChange(e) {
     speed = e.target.value;
+    this.setState({
+        speed: speed,
+    });
   }
   // 改变颜色
-  handleColorChange() {
-    live_colors_count = live_colors_count === live_colors.length - 1 ? 0 : ++live_colors_count;
-    this.setState({
-      live_color: live_colors[live_colors_count],
-    }, () => {
-      // 这里需要把currentArr 设置为 null 进行全部重绘，不然稳定部分不会改变颜色
-      nextArr = currentArr;
-      currentArr = null;
-      this.draw();
-    });
+  handleColorChange({ r, g, b}) {
+    live_color = `rgb(${r},${g},${b})`
   }
   // 改变模版
   handleTemplateChange(e) {
     template = e.target.value;
+    this.setState({
+        template: template,
+    })
   }
   // 左键生，右键死
   handleCanvasMouseDown(e) {
-    const coord = coordinate(e);
     mouseDrawType = 1;
     mouseDrawing = true;
     if (e.button === 2) mouseDrawType = 0;
-    const row = Math.floor(coord.coord_Y / size);
-    const col = Math.floor(coord.coord_X / size);
-    // 只有需要改变状态的时候才会重新绘制那个细胞
-    if (row < rowCount && col < colCount && currentArr[col][row] !== mouseDrawType) {
-      currentArr[col][row] = mouseDrawType;
-      this.drawSingle(row, col, mouseDrawType);
-    }
+    this.getRowColAndDraw(e);
   }
 
   handleCanvasMouseMove(e) {
-    const coord = coordinate(e);
     if (mouseDrawing) {
-      const row = Math.floor(coord.coord_Y / size);
-      const col = Math.floor(coord.coord_X / size);
-      // 只有需要改变状态的时候才会重新绘制那个细胞
-      if (row < rowCount && col < colCount && currentArr[col][row] !== mouseDrawType) {
-        currentArr[col][row] = mouseDrawType;
-        this.drawSingle(row, col, mouseDrawType);
-      }
+      this.getRowColAndDraw(e);
     }
   }
 
@@ -336,23 +372,13 @@ class App extends Component {
 
   render() {
     const { canvasContainerWidth, canvasContainerHeight, canvasWidth, canvasHeight, canvasMarginTop } = this.state;
-    const color_style = {
-      position: 'relative',
-      top: '10px',
-      display: 'inline-block',
-      width: '30px',
-      height: '30px',
-      border: '1px solid black',
-      borderRadius: '2px',
-      backgroundColor: this.state.live_color,
-      cursor: 'pointer',
-    };
+
     return (
       <div>
         <div className="panel" id="panel">
           <div className="top_panel">
             模版：
-            <select name="template" onChange={this.handleTemplateChange} disabled={this.state.template_disabled}>
+            <select name="template" value={this.state.template} onChange={this.handleTemplateChange} disabled={this.state.template_disabled}>
               <option value="empty">空</option>
               <option value="small">少量随机</option>
               <option value="medium">中等随机</option>
@@ -364,23 +390,23 @@ class App extends Component {
             <button onClick={this.next} disabled={this.state.next_disabled}>单步</button>
             <button onClick={this.stop}>停止</button>
             尺寸：
-            <select name="size" onChange={this.handleSizeChange} disabled={this.state.size_disabled} >
+            <select name="size" value={this.state.size} onChange={this.handleSizeChange} disabled={this.state.size_disabled} >
               <option value="35">很大</option>
               <option value="30">大</option>
-              <option value="20" selected>中</option>
+              <option value="20">中</option>
               <option value="5">小</option>
               <option value="2">很小</option>
             </select>
             速度：
-            <select name="speed" onChange={this.handleSpeedChange} disabled={this.state.speed_disabled}>
+            <select name="speed" value={this.state.speed} onChange={this.handleSpeedChange} disabled={this.state.speed_disabled}>
               <option value="800">很慢</option>
               <option value="400">慢</option>
-              <option value="150" selected>中</option>
+              <option value="150">中</option>
               <option value="40">快</option>
               <option value="0">很快</option>
             </select>
-            颜色：
-            <div style={color_style} onClick={this.handleColorChange}></div>
+            颜色:
+            <ColorPallet defaultColor={{r:255,g:0,b:0}} onChange={this.handleColorChange} />
           </div>
           <div className="bottom_panel">
             数据：

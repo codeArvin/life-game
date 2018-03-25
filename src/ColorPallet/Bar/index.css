@@ -1,0 +1,16 @@
+.bar {
+    width: 200px;
+    height: 10px;
+    border: 1px solid black;
+    position: relative;
+    display: inline-block;
+}
+
+.dot {
+    position: absolute;
+    margin-left: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: black;
+}
